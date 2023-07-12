@@ -9,11 +9,6 @@ config declared with:
 - `config.yaml` file - base config
 - `.env` file (need create from .env-backbone) in root folder - private config
 
-# START
-```bash
-go run ./cmd/main/app.go
-```
-
 ## API
 current endpoints:
 
