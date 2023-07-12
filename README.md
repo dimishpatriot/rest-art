@@ -11,7 +11,7 @@ config declared with:
 
 # START
 ```bash
-go run ./cmd/main/app.go
+go run .
 ```
 
 ## API
