@@ -6,6 +6,7 @@ import (
 	"github.com/dimishpatriot/rest-art-of-development/internal/logging"
 
 	"github.com/ilyakaznacheev/cleanenv"
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -20,28 +21,36 @@ type Config struct {
 		Port       string `yaml:"storage_port"`
 		Database   string `yaml:"database"`
 		Collection string `yaml:"collection"`
-		Username   string `yaml:"username"`
-		Password   string `yaml:"password"`
+		Username   string `env:"MONGO_USER" env-default:"user"`
+		Password   string `env:"MONGO_PASSWORD" env-default:"password"`
 	} `yaml:"storage" env-required:"true"`
 }
 
 var (
-	instance *Config
-	once     sync.Once
+	cfg  *Config
+	once sync.Once
 )
 
 func GetConfig() *Config {
+	var err error
+
 	once.Do(func() {
 		logger := logging.GetLogger()
-		instance = &Config{}
 
-		if err := cleanenv.ReadConfig("config.yaml", instance); err != nil {
-			help, _ := cleanenv.GetDescription(instance, nil)
-			logger.Info(help)
-			logger.Fatal(err)
+		if err = godotenv.Load(); err != nil {
+			logger.Fatalf("can't read .env config file: %s", err)
 		}
 
-		logger.Debugf("config created: %+v", instance)
+		cfg = &Config{}
+		if err = cleanenv.ReadConfig("config.yaml", cfg); err != nil {
+			help, _ := cleanenv.GetDescription(cfg, nil)
+			logger.Info(help)
+			logger.Fatalf("can't read yaml config file: %s", err)
+		}
+
+		cfgPrivatePass := *cfg
+		cfgPrivatePass.Storage.Password = "*****"
+		logger.Infof("[OK] config created: %+v", cfgPrivatePass)
 	})
-	return instance
+	return cfg
 }

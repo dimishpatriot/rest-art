@@ -22,13 +22,17 @@ import (
 
 func main() {
 	logger := logging.GetLogger()
-	cfg := config.GetConfig()
-	ctx := context.Background()
-	client := mongoConnect(ctx, cfg, logger)
-	collection := db.NewCollection(client, cfg.Storage.Collection)
 
+	cfg := config.GetConfig()
+
+	ctx := context.Background()
+
+	// DB
+	collection := db.NewCollection(mongoConnect(ctx, cfg, logger), cfg.Storage.Collection)
+
+	// TODO: remove
 	// test
-	id, err := collection.Create(ctx, &user.User{
+	uuid, err := collection.Create(ctx, &user.User{
 		Username:     "Pop",
 		PasswordHash: "1234",
 		Email:        "example@example.com",
@@ -36,19 +40,19 @@ func main() {
 	if err != nil {
 		logger.Error(err)
 	}
-	logger.Debugf("new user ID: %s", id)
+	logger.Debugf("new user UUID<%s>", uuid)
 	// ---
 
 	router := httprouter.New()
-	logger.Infof("router created: %+v", router)
+	logger.Infof("[OK] router created: %+v", *router)
 	user.NewHandler(logger).Register(router)
-	logger.Info("user handler registered")
+	logger.Info("[OK] user handler registered")
 
 	start(router, cfg, logger)
 }
 
 func mongoConnect(ctx context.Context, cfg *config.Config, logger *logging.Logger) *mongo.Database {
-	dbClient, err := mongodb.NewClient(ctx, &mongodb.MongoParams{
+	client, err := mongodb.NewClient(ctx, &mongodb.MongoParams{
 		Host:     cfg.Storage.Host,
 		Port:     cfg.Storage.Port,
 		Database: cfg.Storage.Database,
@@ -58,12 +62,10 @@ func mongoConnect(ctx context.Context, cfg *config.Config, logger *logging.Logge
 	if err != nil {
 		logger.Error(err)
 	}
-	return dbClient
+	return client
 }
 
 func start(router *httprouter.Router, cfg *config.Config, logger *logging.Logger) {
-	logger.Info("start app")
-
 	var err error
 	var listener net.Listener
 	var address, network string
@@ -71,7 +73,6 @@ func start(router *httprouter.Router, cfg *config.Config, logger *logging.Logger
 	if cfg.Listen.Type == "sock" {
 		network = "unix"
 
-		logger.Info("detect app path")
 		appDir, err := filepath.Abs(filepath.Dir(os.Args[0]))
 		if err != nil {
 			logger.Fatal(err)
@@ -85,9 +86,8 @@ func start(router *httprouter.Router, cfg *config.Config, logger *logging.Logger
 
 	listener, err = net.Listen(network, address)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Fatalf("can't get listener: %s", err)
 	}
-
 	server := &http.Server{
 		Handler:      router,
 		WriteTimeout: 5 * time.Second,
@@ -95,6 +95,6 @@ func start(router *httprouter.Router, cfg *config.Config, logger *logging.Logger
 		IdleTimeout:  1 * time.Second,
 	}
 
-	logger.Infof(fmt.Sprintf("server listen at %s: %s", network, address))
-	logger.Fatal(server.Serve(listener))
+	logger.Infof(fmt.Sprintf("server %+v started at [%s:%s]...", *server, network, address))
+	logger.Fatalf("server can't start: %s", server.Serve(listener))
 }

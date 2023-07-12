@@ -13,6 +13,8 @@ import (
 var entry *logrus.Entry
 
 func init() {
+	var err error
+
 	logger := logrus.New()
 	logger.SetReportCaller(true)
 	logger.Formatter = &logrus.TextFormatter{
@@ -25,13 +27,12 @@ func init() {
 		QuoteEmptyFields: true,
 	}
 
-	if err := os.MkdirAll("logs", 0o644); err != nil {
+	if err = os.MkdirAll("logs", 0o700); err != nil {
 		if !os.IsExist(err) {
 			panic(err)
 		}
 	}
-
-	logFile, err := os.OpenFile("logs/all.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
+	logFile, err := os.OpenFile("logs/all.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o666)
 	if err != nil {
 		panic(err)
 	}
@@ -43,7 +44,7 @@ func init() {
 	})
 
 	logger.SetLevel(logrus.TraceLevel)
-	logger.Infof("logger created: %+v", logger)
+	logger.Infof("[OK] logger created: %+v", *logger)
 
 	entry = logrus.NewEntry(logger)
 }

@@ -62,13 +62,10 @@ bld/
 *.tmp
 *.tmp_proj
 *_wpftmp.csproj
-*.log
-*.tlog
 *.vspscc
 *.vssscc
 .builds
 *.pidb
-*.svclog
 *.scc
 
 # Visual Studio profiler
@@ -92,9 +89,13 @@ bld/
 .idea/
 *.sln.iml
 
-# Python Tools for Visual Studio (PTVS)
-__pycache__/
-*.pyc
+# Logs
+logs/
+*.log
+*.svclog
+*.tlog
+
 
 # !! PRIVACY !!
 .env
+.env.test

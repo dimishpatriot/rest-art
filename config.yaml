@@ -10,5 +10,3 @@ storage:
   storage_port: 27017
   database: rest-art
   collection: users
-  username:
-  password:
