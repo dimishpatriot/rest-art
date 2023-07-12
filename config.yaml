@@ -1,0 +1,14 @@
+---
+
+is_debug: true
+listen:
+  type: port
+  bind_ip: 127.0.0.1
+  port: 1234
+storage:
+  host: 127.0.0.1
+  storage_port: 27017
+  database: rest-art
+  collection: users
+  username:
+  password:
