@@ -22,16 +22,11 @@ import (
 
 func main() {
 	logger := logging.GetLogger()
-
 	cfg := config.GetConfig()
-
 	ctx := context.Background()
 
-	// DB
+	// TODO: remove test
 	collection := db.NewCollection(mongoConnect(ctx, cfg, logger), cfg.Storage.Collection)
-
-	// TODO: remove
-	// test
 	uuid, err := collection.Create(ctx, &user.User{
 		Username:     "Pop",
 		PasswordHash: "1234",
@@ -45,6 +40,7 @@ func main() {
 
 	router := httprouter.New()
 	logger.Infof("[OK] router created: %+v", *router)
+
 	user.NewHandler(logger).Register(router)
 	logger.Info("[OK] user handler registered")
 
@@ -65,29 +61,26 @@ func mongoConnect(ctx context.Context, cfg *config.Config, logger *logging.Logge
 	return client
 }
 
-func start(router *httprouter.Router, cfg *config.Config, logger *logging.Logger) {
-	var err error
-	var listener net.Listener
-	var address, network string
-
-	if cfg.Listen.Type == "sock" {
-		network = "unix"
-
-		appDir, err := filepath.Abs(filepath.Dir(os.Args[0]))
-		if err != nil {
-			logger.Fatal(err)
-		}
-		address = path.Join(appDir, "app.sock")
-	} else {
-		network = "tcp"
-
-		address = fmt.Sprintf("%s:%s", cfg.Listen.BindIP, cfg.Listen.Port)
+func getNetworkInfo(cfg *config.Config) (string, string) {
+	switch cfg.Listen.Type {
+	case "sock":
+		appDir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
+		return "unix", path.Join(appDir, "app.sock")
+	case "port":
+		return "tcp", fmt.Sprintf("%s:%s", cfg.Listen.BindIP, cfg.Listen.Port)
+	default:
+		panic("incorrect network")
 	}
+}
 
-	listener, err = net.Listen(network, address)
+func start(router *httprouter.Router, cfg *config.Config, logger *logging.Logger) {
+	network, address := getNetworkInfo(cfg)
+
+	listener, err := net.Listen(network, address)
 	if err != nil {
 		logger.Fatalf("can't get listener: %s", err)
 	}
+
 	server := &http.Server{
 		Handler:      router,
 		WriteTimeout: 5 * time.Second,
@@ -95,6 +88,6 @@ func start(router *httprouter.Router, cfg *config.Config, logger *logging.Logger
 		IdleTimeout:  1 * time.Second,
 	}
 
-	logger.Infof(fmt.Sprintf("server %+v started at [%s:%s]...", *server, network, address))
+	logger.Infof(fmt.Sprintf("server %+v started at <%s:%s>...", server, network, address))
 	logger.Fatalf("server can't start: %s", server.Serve(listener))
 }
