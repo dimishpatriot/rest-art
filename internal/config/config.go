@@ -18,7 +18,7 @@ type Config struct {
 	} `yaml:"listen" env-required:"true"`
 	Storage struct {
 		Host       string `yaml:"host"`
-		Port       string `yaml:"storage_port"`
+		Port       string `yaml:"port"`
 		Database   string `yaml:"database"`
 		Collection string `yaml:"collection"`
 		Username   string `env:"MONGO_USER" env-default:"user"`
@@ -26,13 +26,11 @@ type Config struct {
 	} `yaml:"storage" env-required:"true"`
 }
 
-var (
-	cfg  *Config
-	once sync.Once
-)
+var once sync.Once
 
 func GetConfig() *Config {
 	var err error
+	var cfg *Config
 
 	once.Do(func() {
 		logger := logging.GetLogger()
@@ -48,9 +46,24 @@ func GetConfig() *Config {
 			logger.Fatalf("can't read yaml config file: %s", err)
 		}
 
-		cfgPrivatePass := *cfg
-		cfgPrivatePass.Storage.Password = "*****"
-		logger.Infof("[OK] config created: %+v", cfgPrivatePass)
+		showConfigWithSecret(logger, cfg)
 	})
 	return cfg
+}
+
+func showConfigWithSecret(logger *logging.Logger, cfg *Config) {
+	cfgPrivatePass := *cfg
+	if cfgPrivatePass.Storage.Username != "" {
+		cfgPrivatePass.Storage.Username = "some-user"
+	} else {
+		cfgPrivatePass.Storage.Username = "empty"
+	}
+
+	if cfgPrivatePass.Storage.Password != "" {
+		cfgPrivatePass.Storage.Password = "*********"
+	} else {
+		cfgPrivatePass.Storage.Password = "empty"
+	}
+
+	logger.Infof("[OK] config created: %+v", cfgPrivatePass)
 }

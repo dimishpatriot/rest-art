@@ -7,6 +7,6 @@ listen:
   port: 1234
 storage:
   host: 127.0.0.1
-  storage_port: 27017
+  port: 27017
   database: rest-art
   collection: users
