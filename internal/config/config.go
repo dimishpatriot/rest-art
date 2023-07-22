@@ -9,6 +9,15 @@ import (
 	"github.com/joho/godotenv"
 )
 
+type Storage struct {
+	Host       string `yaml:"host"`
+	Port       string `yaml:"port"`
+	Database   string `yaml:"database"`
+	Collection string `yaml:"collection"`
+	Username   string `env:"MONGO_USER"`
+	Password   string `env:"MONGO_PASSWORD"`
+}
+
 type Config struct {
 	IsDebug bool `yaml:"is_debug" env-required:"true"`
 	Listen  struct {
@@ -16,14 +25,7 @@ type Config struct {
 		BindIP string `yaml:"bind_ip" env-default:"127.0.0.1"`
 		Port   string `yaml:"port" env-default:"8080"`
 	} `yaml:"listen" env-required:"true"`
-	Storage struct {
-		Host       string `yaml:"host"`
-		Port       string `yaml:"port"`
-		Database   string `yaml:"database"`
-		Collection string `yaml:"collection"`
-		Username   string `env:"MONGO_USER" env-default:"user"`
-		Password   string `env:"MONGO_PASSWORD" env-default:"password"`
-	} `yaml:"storage" env-required:"true"`
+	Storage `yaml:"storage" env-required:"true"`
 }
 
 var once sync.Once
@@ -53,6 +55,7 @@ func GetConfig() *Config {
 
 func showConfigWithSecret(logger *logging.Logger, cfg *Config) {
 	cfgPrivatePass := *cfg
+
 	if cfgPrivatePass.Storage.Username != "" {
 		cfgPrivatePass.Storage.Username = "some-user"
 	} else {

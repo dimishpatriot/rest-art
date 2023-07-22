@@ -68,19 +68,13 @@ bld/
 *.pidb
 *.scc
 
-# Visual Studio profiler
+# VS Code files for those working on multiple tools
+.vscode/
+*.code-workspace
 *.psess
 *.vsp
 *.vspx
 *.sap
-
-# VS Code files for those working on multiple tools
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-*.code-workspace
 
 # Local History for Visual Studio Code
 .history/

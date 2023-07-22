@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/dimishpatriot/rest-art-of-development/internal/client/mongodb"
+	"github.com/dimishpatriot/rest-art-of-development/internal/config"
 	"github.com/dimishpatriot/rest-art-of-development/internal/logging"
 	"github.com/dimishpatriot/rest-art-of-development/internal/user"
 	"go.mongodb.org/mongo-driver/bson"
@@ -16,9 +18,23 @@ type db struct {
 	logger     *logging.Logger
 }
 
+func Connect(ctx context.Context, cfg *config.Config, logger *logging.Logger) *mongo.Database {
+	client, err := mongodb.NewClient(ctx, &mongodb.MongoParams{
+		Host:     cfg.Storage.Host,
+		Port:     cfg.Storage.Port,
+		Database: cfg.Storage.Database,
+		Username: cfg.Storage.Username,
+		Password: cfg.Storage.Password,
+	})
+	if err != nil {
+		logger.Error(err)
+	}
+	return client
+}
+
 // Create new user and return UUID
-func (d *db) Create(ctx context.Context, user *user.User) (string, error) {
-	result, err := d.collection.InsertOne(ctx, user)
+func (d *db) Create(ctx context.Context, u *user.User) (string, error) {
+	result, err := d.collection.InsertOne(ctx, u)
 	if err != nil {
 		return "", fmt.Errorf("can't create new user in DB: %s", err)
 	}
@@ -35,6 +51,8 @@ func (d *db) Create(ctx context.Context, user *user.User) (string, error) {
 
 // Delete user by UUID
 func (d *db) Delete(ctx context.Context, uuid string) error {
+	var err error
+
 	oid, err := primitive.ObjectIDFromHex(uuid)
 	if err != nil {
 		return fmt.Errorf("can't get ObjectID from UUID=%s", err)
@@ -53,44 +71,49 @@ func (d *db) Delete(ctx context.Context, uuid string) error {
 }
 
 // FindOne
-func (d *db) FindOne(ctx context.Context, uuid string) (user *user.User, err error) {
+func (d *db) FindOne(ctx context.Context, uuid string) (*user.User, error) {
+	var err error
+	u := &user.User{}
+
 	oid, err := primitive.ObjectIDFromHex(uuid)
 	if err != nil {
 		return nil, fmt.Errorf("can't get ObjectID from UUID=%s: %s", uuid, err)
 	}
 
-	if err = d.collection.FindOne(ctx, bson.M{"_id": oid}).Decode(user); err != nil {
+	if err = d.collection.FindOne(ctx, bson.M{"_id": oid}).Decode(u); err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, fmt.Errorf("can't find user UUID<%s>: %w", uuid, err)
 		}
 		return nil, err
 	}
-	d.logger.Infof("[OK] user UUID<%s> was found", user.ID)
+	d.logger.Infof("[OK] user UUID<%s> was found", u.ID)
 
-	return user, nil
+	return u, nil
 }
 
 // Update
-func (d *db) Update(ctx context.Context, user *user.User) error {
-	oid, err := primitive.ObjectIDFromHex(user.ID)
+func (d *db) Update(ctx context.Context, u *user.User) error {
+	var err error
+
+	oid, err := primitive.ObjectIDFromHex(u.ID)
 	if err != nil {
 		return err
 	}
 
 	update := bson.M{
-		"username":      user.Username,
-		"email":         user.Email,
-		"password_hash": user.PasswordHash,
+		"username":      u.Username,
+		"email":         u.Email,
+		"password_hash": u.PasswordHash,
 	}
 
-	result, err := d.collection.UpdateByID(ctx, oid, update)
+	result, err := d.collection.UpdateByID(ctx, oid, bson.M{"$set": update})
 	if err != nil {
-		return fmt.Errorf("can't update user UUID<%s>: %s", user.ID, err)
+		return fmt.Errorf("can't update user UUID<%s>: %s", u.ID, err)
 	}
 	if result.MatchedCount == 0 {
-		return fmt.Errorf("can't find user UUID<%s> to update", user.ID)
+		return fmt.Errorf("can't find user UUID<%s> to update", u.ID)
 	}
-	d.logger.Infof("[OK] user UUID<%s> was updated", user.ID)
+	d.logger.Infof("[OK] user UUID<%s> was updated", u.ID)
 
 	return nil
 }
