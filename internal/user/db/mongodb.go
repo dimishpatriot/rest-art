@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/dimishpatriot/rest-art-of-development/internal/client/mongodb"
-	"github.com/dimishpatriot/rest-art-of-development/internal/config"
 	"github.com/dimishpatriot/rest-art-of-development/internal/logging"
 	"github.com/dimishpatriot/rest-art-of-development/internal/user"
 	"go.mongodb.org/mongo-driver/bson"
@@ -16,20 +14,6 @@ import (
 type db struct {
 	collection *mongo.Collection
 	logger     *logging.Logger
-}
-
-func Connect(ctx context.Context, cfg *config.Config, logger *logging.Logger) *mongo.Database {
-	client, err := mongodb.NewClient(ctx, &mongodb.MongoParams{
-		Host:     cfg.Storage.Host,
-		Port:     cfg.Storage.Port,
-		Database: cfg.Storage.Database,
-		Username: cfg.Storage.Username,
-		Password: cfg.Storage.Password,
-	})
-	if err != nil {
-		logger.Error(err)
-	}
-	return client
 }
 
 // Create new user and return UUID

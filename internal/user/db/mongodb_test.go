@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/dimishpatriot/rest-art-of-development/internal/client/mongodb"
 	"github.com/dimishpatriot/rest-art-of-development/internal/config"
 	"github.com/dimishpatriot/rest-art-of-development/internal/logging"
 	"github.com/dimishpatriot/rest-art-of-development/internal/user"
@@ -31,7 +32,7 @@ func TestMain(m *testing.M) {
 		Password:   "",
 	}
 
-	database := db.Connect(ctx, cfg, logger)
+	database := mongodb.Connect(ctx, cfg, logger)
 	collection = db.NewCollection(database, cfg.Storage.Collection)
 
 	m.Run()

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/dimishpatriot/rest-art-of-development/internal/config"
 	"github.com/dimishpatriot/rest-art-of-development/internal/logging"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -45,4 +46,18 @@ func NewClient(ctx context.Context, params *MongoParams) (*mongo.Database, error
 	logger.Infof("[OK] database <%s> available", params.Database)
 
 	return client.Database(params.Database), nil
+}
+
+func Connect(ctx context.Context, cfg *config.Config, logger *logging.Logger) *mongo.Database {
+	client, err := NewClient(ctx, &MongoParams{
+		Host:     cfg.Storage.Host,
+		Port:     cfg.Storage.Port,
+		Database: cfg.Storage.Database,
+		Username: cfg.Storage.Username,
+		Password: cfg.Storage.Password,
+	})
+	if err != nil {
+		logger.Error(err)
+	}
+	return client
 }
