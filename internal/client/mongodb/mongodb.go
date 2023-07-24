@@ -57,7 +57,7 @@ func Connect(ctx context.Context, cfg *config.Config, logger *logging.Logger) *m
 		Password: cfg.Storage.Password,
 	})
 	if err != nil {
-		logger.Error(err)
+		logger.Fatalf("can't get db client: %s", err)
 	}
 	return client
 }

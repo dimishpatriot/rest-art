@@ -12,22 +12,24 @@ import (
 
 var entry *logrus.Entry
 
-func init() {
-	var err error
+type Logger struct {
+	*logrus.Entry
+}
 
+func (l *Logger) GetLoggerWithField(k string, v interface{}) *Logger {
+	return &Logger{l.WithField(k, v)}
+}
+
+func GetLogger() *Logger {
+	return &Logger{entry}
+}
+
+func CreateLogger() {
 	logger := logrus.New()
 	logger.SetReportCaller(true)
-	logger.Formatter = &logrus.TextFormatter{
-		CallerPrettyfier: func(frame *runtime.Frame) (function string, file string) {
-			filename := path.Base(frame.File)
-			return frame.Function, fmt.Sprintf("%s:%d", filename, frame.Line)
-		},
-		DisableColors:    true,
-		FullTimestamp:    true,
-		QuoteEmptyFields: true,
-	}
+	logger.Formatter = getFormatter()
 
-	if err = os.MkdirAll("logs", 0o700); err != nil {
+	if err := os.MkdirAll("logs", 0o700); err != nil {
 		if !os.IsExist(err) {
 			panic(err)
 		}
@@ -44,17 +46,38 @@ func init() {
 	})
 
 	logger.SetLevel(logrus.TraceLevel)
-	logger.Infof("[OK] logger created: %+v", *logger)
+	logger.Infof("[OK] logger created: %+v", logger)
 
 	entry = logrus.NewEntry(logger)
 }
 
-func GetLogger() *Logger {
-	return &Logger{entry}
+func CreateTestLogger() {
+	logger := logrus.New()
+	logger.SetReportCaller(true)
+	logger.Formatter = getFormatter()
+
+	logger.SetOutput(io.Discard)
+	logger.AddHook(&writerHook{
+		Writer:    []io.Writer{os.Stdout},
+		LogLevels: logrus.AllLevels,
+	})
+
+	logger.SetLevel(logrus.InfoLevel)
+	logger.Infof("[OK] test logger created: %+v", logger)
+
+	entry = logrus.NewEntry(logger)
 }
 
-func (l *Logger) GetLoggerWithField(k string, v interface{}) *Logger {
-	return &Logger{l.WithField(k, v)}
+func getFormatter() logrus.Formatter {
+	return &logrus.TextFormatter{
+		CallerPrettyfier: func(frame *runtime.Frame) (function string, file string) {
+			filename := path.Base(frame.File)
+			return frame.Function, fmt.Sprintf("%s:%d", filename, frame.Line)
+		},
+		DisableColors:    true,
+		FullTimestamp:    true,
+		QuoteEmptyFields: true,
+	}
 }
 
 type writerHook struct {
@@ -75,8 +98,4 @@ func (hook *writerHook) Fire(entry *logrus.Entry) error {
 
 func (hook *writerHook) Levels() []logrus.Level {
 	return hook.LogLevels
-}
-
-type Logger struct {
-	*logrus.Entry
 }

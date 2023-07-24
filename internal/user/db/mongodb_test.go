@@ -19,7 +19,9 @@ var (
 )
 
 func TestMain(m *testing.M) {
+	logging.CreateTestLogger()
 	logger = logging.GetLogger()
+
 	ctx = context.Background()
 
 	cfg = &config.Config{}
@@ -82,46 +84,3 @@ func Test_db_Create(t *testing.T) {
 		})
 	}
 }
-
-// // TODO: test
-// 	// 1
-// 	database := db.Connect(ctx, cfg, logger)
-// 	collection := db.NewCollection(database, cfg.Storage.Collection)
-
-// 	// 2
-// 	uuid, err := collection.Create(ctx, &user.User{
-// 		Username:     "Pop",
-// 		PasswordHash: "1234",
-// 		Email:        "example@example.com",
-// 	})
-// 	if err != nil {
-// 		logger.Fatal(err)
-// 	}
-
-// 	// 3
-// 	if _, err = collection.FindOne(ctx, uuid); err != nil {
-// 		logger.Fatal(err)
-// 	}
-
-// 	// 4
-// 	newUserData := &user.User{
-// 		ID:           uuid,
-// 		Username:     "UPD_USERNAME",
-// 		PasswordHash: "UPD_HASH",
-// 		Email:        "upd@upd.me",
-// 	}
-// 	if err = collection.Update(ctx, newUserData); err != nil {
-// 		logger.Fatal(err)
-// 	}
-// 	if _, err := collection.FindOne(ctx, uuid); err != nil {
-// 		logger.Fatal(err)
-// 	}
-
-// 	// 5
-// 	if err = collection.Delete(ctx, uuid); err != nil {
-// 		logger.Fatal(err)
-// 	}
-// 	if _, err = collection.FindOne(ctx, uuid); err == nil {
-// 		logger.Fatal(err)
-// 	}
-// 	// ---

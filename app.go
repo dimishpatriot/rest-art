@@ -17,6 +17,7 @@ import (
 )
 
 func main() {
+	logging.CreateLogger()
 	logger := logging.GetLogger()
 	cfg := config.GetConfig()
 
@@ -27,18 +28,6 @@ func main() {
 	logger.Info("[OK] user handler registered")
 
 	start(router, cfg, logger)
-}
-
-func getNetworkInfo(cfg *config.Config) (string, string) {
-	switch cfg.Listen.Type {
-	case "sock":
-		appDir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
-		return "unix", path.Join(appDir, "app.sock")
-	case "port":
-		return "tcp", fmt.Sprintf("%s:%s", cfg.Listen.BindIP, cfg.Listen.Port)
-	default:
-		panic("incorrect network")
-	}
 }
 
 func start(router *httprouter.Router, cfg *config.Config, logger *logging.Logger) {
@@ -58,4 +47,16 @@ func start(router *httprouter.Router, cfg *config.Config, logger *logging.Logger
 
 	logger.Infof(fmt.Sprintf("server %+v started at <%s:%s>...", server, network, address))
 	logger.Fatalf("server can't start: %s", server.Serve(listener))
+}
+
+func getNetworkInfo(cfg *config.Config) (string, string) {
+	switch cfg.Listen.Type {
+	case "sock":
+		appDir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
+		return "unix", path.Join(appDir, "app.sock")
+	case "port":
+		return "tcp", fmt.Sprintf("%s:%s", cfg.Listen.BindIP, cfg.Listen.Port)
+	default:
+		panic("incorrect network")
+	}
 }

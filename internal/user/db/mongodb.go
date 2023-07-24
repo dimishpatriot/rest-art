@@ -18,6 +18,10 @@ type db struct {
 
 // Create new user and return UUID
 func (d *db) Create(ctx context.Context, u *user.User) (string, error) {
+	if u.Email == "" || u.Username == "" || u.PasswordHash == "" {
+		return "", fmt.Errorf("empty user data")
+	}
+
 	result, err := d.collection.InsertOne(ctx, u)
 	if err != nil {
 		return "", fmt.Errorf("can't create new user in DB: %s", err)
@@ -28,7 +32,7 @@ func (d *db) Create(ctx context.Context, u *user.User) (string, error) {
 		return "", fmt.Errorf("cant get ObjectID for new user")
 	}
 	uuid := oid.Hex()
-	d.logger.Infof("[OK] user with UUID<%s> was created", uuid)
+	d.logger.Debugf("user with UUID<%s> was created", uuid)
 
 	return uuid, nil
 }
@@ -49,7 +53,7 @@ func (d *db) Delete(ctx context.Context, uuid string) error {
 	if result.DeletedCount == 0 {
 		return fmt.Errorf("can't find user UUID<%s> to delete", uuid)
 	}
-	d.logger.Infof("[OK] user with UUID<%s> was deleted", uuid)
+	d.logger.Debugf("user with UUID<%s> was deleted", uuid)
 
 	return nil
 }
@@ -70,7 +74,7 @@ func (d *db) FindOne(ctx context.Context, uuid string) (*user.User, error) {
 		}
 		return nil, err
 	}
-	d.logger.Infof("[OK] user UUID<%s> was found", u.ID)
+	d.logger.Debugf("user UUID<%s> was found", u.ID)
 
 	return u, nil
 }
@@ -97,7 +101,7 @@ func (d *db) Update(ctx context.Context, u *user.User) error {
 	if result.MatchedCount == 0 {
 		return fmt.Errorf("can't find user UUID<%s> to update", u.ID)
 	}
-	d.logger.Infof("[OK] user UUID<%s> was updated", u.ID)
+	d.logger.Debugf("user UUID<%s> was updated", u.ID)
 
 	return nil
 }
